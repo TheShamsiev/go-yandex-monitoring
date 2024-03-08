@@ -1,8 +1,16 @@
 package storage
 
+type MemStorageGauge map[string]float64
+
+type MemStorageCounter map[string]int64
+
 type MemStorage struct {
-	gauge   map[string]float64
-	counter map[string]int64
+	gauge   MemStorageGauge
+	counter MemStorageCounter
+}
+
+func NewMemStorage(gauge MemStorageGauge, counter MemStorageCounter) MemStorage {
+	return MemStorage{gauge, counter}
 }
 
 func (ms *MemStorage) Gauge(key string) (float64, error) {

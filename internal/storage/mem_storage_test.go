@@ -38,7 +38,7 @@ func TestGauge(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			counter := make(map[string]int64)
-			ms := MemStorage{test.gauge, counter}
+			ms := NewMemStorage(test.gauge, counter)
 
 			actual_value, actual_error := ms.Gauge(test.key)
 			if actual_value != test.expected_value || actual_error != test.expected_error {
@@ -88,7 +88,7 @@ func TestCounter(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			gauge := make(map[string]float64)
-			ms := MemStorage{gauge, test.counter}
+			ms := NewMemStorage(gauge, test.counter)
 
 			actual_value, actual_error := ms.Counter(test.key)
 			if actual_value != test.expected_value || actual_error != test.expected_error {
@@ -147,7 +147,7 @@ func TestUpdateGauge(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			counter := make(map[string]int64)
-			ms := MemStorage{test.gauge, counter}
+			ms := NewMemStorage(test.gauge, counter)
 
 			for _, kv := range test.input_sequence {
 				ms.UpdateGauge(kv.key, kv.val)
@@ -210,7 +210,7 @@ func TestUpdateCounter(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			gauge := make(map[string]float64)
-			ms := MemStorage{gauge, test.counter}
+			ms := NewMemStorage(gauge, test.counter)
 
 			for _, kv := range test.input_sequence {
 				ms.UpdateCounter(kv.key, kv.val)
