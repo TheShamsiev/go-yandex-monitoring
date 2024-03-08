@@ -3,8 +3,8 @@ package handler
 import (
 	"go-yandex-monitoring/internal/storage"
 	"net/http"
-	"strings"
 	"strconv"
+	"strings"
 )
 
 func UpdateMetrics(ms storage.Storage) func(w http.ResponseWriter, r *http.Request) {
