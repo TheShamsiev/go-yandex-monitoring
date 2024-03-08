@@ -111,6 +111,12 @@ func TestUpdateMetrics(t *testing.T) {
 			UpdateMetrics(&storage)(w, request)
 
 			res := w.Result()
+
+			err := res.Body.Close()
+			if err != nil {
+				t.Error(err)
+			}
+
 			if res.StatusCode != test.statusCode {
 				t.Errorf("expected status code %v, but got %v", test.statusCode, res.StatusCode)
 			}

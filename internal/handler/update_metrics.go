@@ -20,25 +20,25 @@ func UpdateMetrics(ms storage.Storage) func(w http.ResponseWriter, r *http.Reque
 			return
 		}
 
-		metric_type := path[len(path)-3]
-		metric_name := path[len(path)-2]
-		metric_value := path[len(path)-1]
+		metricType := path[len(path)-3]
+		metricName := path[len(path)-2]
+		metricValue := path[len(path)-1]
 
-		switch metric_type {
+		switch metricType {
 		case "counter":
-			counter, err := strconv.ParseInt(metric_value, 10, 64)
+			counter, err := strconv.ParseInt(metricValue, 10, 64)
 			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
-			ms.UpdateCounter(metric_name, counter)
+			ms.UpdateCounter(metricName, counter)
 		case "gauge":
-			gauge, err := strconv.ParseFloat(metric_value, 64)
+			gauge, err := strconv.ParseFloat(metricValue, 64)
 			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
-			ms.UpdateGauge(metric_name, gauge)
+			ms.UpdateGauge(metricName, gauge)
 		default:
 			w.WriteHeader(http.StatusBadRequest)
 		}

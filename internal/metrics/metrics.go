@@ -71,6 +71,13 @@ func sendMetric(serverAddress, metricType, metricName, value string) {
 		fmt.Printf("[ERROR] Status code: %d", res.StatusCode)
 		return
 	}
+
+	err = res.Body.Close()
+
+	if err != nil {
+		fmt.Printf("[ERROR] %s", err.Error())
+		return
+	}
 }
 
 func (m *Metrics) Report(serverAddress string) {
