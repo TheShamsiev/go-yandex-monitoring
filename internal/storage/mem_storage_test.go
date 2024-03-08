@@ -7,28 +7,28 @@ import (
 func TestGauge(t *testing.T) {
 	tests := []struct {
 		name           string
-		gauge          map[string]float64
+		gauge          MemStorageGauge
 		key            string
 		expected_value float64
 		expected_error error
 	}{
 		{
 			name:           "empty gauge",
-			gauge:          make(map[string]float64),
+			gauge:          make(MemStorageGauge),
 			key:            "some_key",
 			expected_value: 0,
 			expected_error: KeyNotFoundError{"some_key"},
 		},
 		{
 			name:           "no key in gauge",
-			gauge:          map[string]float64{"pi": 3.14, "answer": 42},
+			gauge:          MemStorageGauge{"pi": 3.14, "answer": 42},
 			key:            "some_key",
 			expected_value: 0,
 			expected_error: KeyNotFoundError{"some_key"},
 		},
 		{
 			name:           "key in gauge",
-			gauge:          map[string]float64{"pi": 3.14, "answer": 42},
+			gauge:          MemStorageGauge{"pi": 3.14, "answer": 42},
 			key:            "answer",
 			expected_value: 42,
 			expected_error: nil,
@@ -37,7 +37,7 @@ func TestGauge(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			counter := make(map[string]int64)
+			counter := make(MemStorageCounter)
 			ms := NewMemStorage(test.gauge, counter)
 
 			actual_value, actual_error := ms.Gauge(test.key)
@@ -57,28 +57,28 @@ func TestGauge(t *testing.T) {
 func TestCounter(t *testing.T) {
 	tests := []struct {
 		name           string
-		counter        map[string]int64
+		counter        MemStorageCounter
 		key            string
 		expected_value int64
 		expected_error error
 	}{
 		{
 			name:           "empty counter",
-			counter:        make(map[string]int64),
+			counter:        make(MemStorageCounter),
 			key:            "some_key",
 			expected_value: 0,
 			expected_error: KeyNotFoundError{"some_key"},
 		},
 		{
 			name:           "no key in counter",
-			counter:        map[string]int64{"answer": 42, "false": 0},
+			counter:        MemStorageCounter{"answer": 42, "false": 0},
 			key:            "question",
 			expected_value: 0,
 			expected_error: KeyNotFoundError{"question"},
 		},
 		{
 			name:           "key in counter",
-			counter:        map[string]int64{"answer": 42, "true": 1},
+			counter:        MemStorageCounter{"answer": 42, "true": 1},
 			key:            "true",
 			expected_value: 1,
 			expected_error: nil,
@@ -87,7 +87,7 @@ func TestCounter(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			gauge := make(map[string]float64)
+			gauge := make(MemStorageGauge)
 			ms := NewMemStorage(gauge, test.counter)
 
 			actual_value, actual_error := ms.Counter(test.key)
@@ -112,7 +112,7 @@ func TestUpdateGauge(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		gauge          map[string]float64
+		gauge          MemStorageGauge
 		input_sequence []key_value_pair
 		key            string
 		expected_value float64
@@ -120,7 +120,7 @@ func TestUpdateGauge(t *testing.T) {
 	}{
 		{
 			name:           "entry has not been passed to storage",
-			gauge:          map[string]float64{"a": 1},
+			gauge:          MemStorageGauge{"a": 1},
 			input_sequence: []key_value_pair{{"b", 2}, {"c", 3}, {"d", 4}},
 			key:            "e",
 			expected_value: 0,
@@ -128,7 +128,7 @@ func TestUpdateGauge(t *testing.T) {
 		},
 		{
 			name:           "entry has been passed to storage one time",
-			gauge:          map[string]float64{"a": 1},
+			gauge:          MemStorageGauge{"a": 1},
 			input_sequence: []key_value_pair{{"b", 2}, {"c", 3}, {"d", 4}},
 			key:            "c",
 			expected_value: 3,
@@ -136,7 +136,7 @@ func TestUpdateGauge(t *testing.T) {
 		},
 		{
 			name:           "entry has been passed to storage multiple times",
-			gauge:          map[string]float64{"a": 1},
+			gauge:          MemStorageGauge{"a": 1},
 			input_sequence: []key_value_pair{{"b", 2}, {"c", 3}, {"d", 4}, {"c", 10}},
 			key:            "c",
 			expected_value: 10,
@@ -146,7 +146,7 @@ func TestUpdateGauge(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			counter := make(map[string]int64)
+			counter := make(MemStorageCounter)
 			ms := NewMemStorage(test.gauge, counter)
 
 			for _, kv := range test.input_sequence {
@@ -175,7 +175,7 @@ func TestUpdateCounter(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		counter        map[string]int64
+		counter        MemStorageCounter
 		input_sequence []key_value_pair
 		key            string
 		expected_value int64
@@ -183,7 +183,7 @@ func TestUpdateCounter(t *testing.T) {
 	}{
 		{
 			name:           "entry has not been passed to storage",
-			counter:        map[string]int64{"a": 1},
+			counter:        MemStorageCounter{"a": 1},
 			input_sequence: []key_value_pair{{"b", 2}, {"c", 3}, {"d", 4}},
 			key:            "e",
 			expected_value: 0,
@@ -191,7 +191,7 @@ func TestUpdateCounter(t *testing.T) {
 		},
 		{
 			name:           "entry has been passed to storage one time",
-			counter:        map[string]int64{"a": 1},
+			counter:        MemStorageCounter{"a": 1},
 			input_sequence: []key_value_pair{{"b", 2}, {"c", 3}, {"d", 4}},
 			key:            "c",
 			expected_value: 3,
@@ -199,7 +199,7 @@ func TestUpdateCounter(t *testing.T) {
 		},
 		{
 			name:           "entry has been passed to storage multiple times",
-			counter:        map[string]int64{"a": 1},
+			counter:        MemStorageCounter{"a": 1},
 			input_sequence: []key_value_pair{{"b", 2}, {"c", 3}, {"d", 4}, {"c", 10}},
 			key:            "c",
 			expected_value: 13,
@@ -209,7 +209,7 @@ func TestUpdateCounter(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			gauge := make(map[string]float64)
+			gauge := make(MemStorageGauge)
 			ms := NewMemStorage(gauge, test.counter)
 
 			for _, kv := range test.input_sequence {
