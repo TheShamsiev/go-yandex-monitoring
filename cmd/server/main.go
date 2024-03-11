@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"net/http"
 
@@ -10,13 +9,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 )
-
-var flagAddress string
-
-func parseFlags() {
-	flag.StringVar(&flagAddress, "a", "localhost:8080", "address with port for the server to run on")
-	flag.Parse()
-}
 
 func main() {
 	parseFlags()
