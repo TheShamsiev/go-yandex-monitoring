@@ -229,3 +229,31 @@ func TestUpdateCounter(t *testing.T) {
 		})
 	}
 }
+
+func TestString(t *testing.T) {
+	tests := []struct {
+		name     string
+		storage  MemStorage
+		expected string
+	}{
+		{
+			name:     "empty storage",
+			storage:  MemStorage{MemStorageGauge{}, MemStorageCounter{}},
+			expected: "",
+		},
+		{
+			name:     "empty storage",
+			storage:  MemStorage{MemStorageGauge{"pi": 3.14}, MemStorageCounter{"answer": 42}},
+			expected: "pi: 3.14\nanswer: 42",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := test.storage.String()
+			if actual != test.expected {
+				t.Errorf("expected: %s; actual: %s", test.expected, actual)
+			}
+		})
+	}
+}

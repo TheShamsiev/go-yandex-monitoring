@@ -4,43 +4,39 @@ import (
 	"go-yandex-monitoring/internal/storage"
 	"net/http"
 	"strconv"
-	"strings"
+
+	"github.com/go-chi/chi/v5"
 )
 
-func UpdateMetrics(ms storage.Storage) func(w http.ResponseWriter, r *http.Request) {
+func updateMetrics(ms storage.Storage) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-
-		path := strings.Split(r.URL.Path, "/")
-		if len(path) != 5 {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-
-		metricType := path[len(path)-3]
-		metricName := path[len(path)-2]
-		metricValue := path[len(path)-1]
+		metricType := chi.URLParam(r, "metric_type")
+		metricName := chi.URLParam(r, "metric_name")
+		metricValue := chi.URLParam(r, "metric_value")
 
 		switch metricType {
 		case "counter":
-			counter, err := strconv.ParseInt(metricValue, 10, 64)
+			val, err := strconv.ParseInt(metricValue, 10, 64)
 			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
-			ms.UpdateCounter(metricName, counter)
+			ms.UpdateCounter(metricName, val)
+
 		case "gauge":
-			gauge, err := strconv.ParseFloat(metricValue, 64)
+			val, err := strconv.ParseFloat(metricValue, 64)
 			if err != nil {
 				w.WriteHeader(http.StatusBadRequest)
 				return
 			}
-			ms.UpdateGauge(metricName, gauge)
+			ms.UpdateGauge(metricName, val)
+
 		default:
 			w.WriteHeader(http.StatusBadRequest)
 		}
 	}
+}
+
+func UpdateMetricsRouter(r chi.Router, ms storage.Storage) {
+	r.Post("/update/{metric_type}/{metric_name}/{metric_value}", updateMetrics(ms))
 }

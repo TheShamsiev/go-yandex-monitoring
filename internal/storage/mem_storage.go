@@ -1,5 +1,10 @@
 package storage
 
+import (
+	"fmt"
+	"strings"
+)
+
 type MemStorageGauge map[string]float64
 
 type MemStorageCounter map[string]int64
@@ -35,4 +40,18 @@ func (ms *MemStorage) UpdateGauge(key string, val float64) {
 
 func (ms *MemStorage) UpdateCounter(key string, val int64) {
 	ms.counter[key] += val
+}
+
+func (ms *MemStorage) String() string {
+	var metrics []string
+
+	for k, v := range ms.gauge {
+		metrics = append(metrics, fmt.Sprintf("%s: %v", k, v))
+	}
+
+	for k, v := range ms.counter {
+		metrics = append(metrics, fmt.Sprintf("%s: %v", k, v))
+	}
+
+	return strings.Join(metrics, "\n")
 }

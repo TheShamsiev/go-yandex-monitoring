@@ -1,125 +1,95 @@
 package handler
 
 import (
+	"go-yandex-monitoring/internal/storage"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"go-yandex-monitoring/internal/storage"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-resty/resty/v2"
+	"github.com/stretchr/testify/assert"
 )
 
-func TestUpdateMetrics(t *testing.T) {
+func TestUpdateMetricsRouter(t *testing.T) {
+	ms := storage.NewMemStorage(storage.MemStorageGauge{"a": 1.0}, storage.MemStorageCounter{"b": 2})
+	r := chi.NewRouter()
+	UpdateMetricsRouter(r, &ms)
+	srv := httptest.NewServer(r)
+	defer srv.Close()
+
 	tests := []struct {
-		name       string
-		statusCode int
-		method     string
-		url        string
+		name           string
+		method         string
+		url            string
+		expectedStatus int
 	}{
 		{
-			name:       "GET request returns `http.StatusMethodNotAllowed`",
-			statusCode: http.StatusMethodNotAllowed,
-			method:     http.MethodGet,
-			url:        "/update/counter/test/1",
+			name:           "invalid method type (GET)",
+			method:         "GET",
+			url:            "/update/gauge/a/2.0",
+			expectedStatus: http.StatusMethodNotAllowed,
 		},
 		{
-			name:       "HEAD request returns `http.StatusMethodNotAllowed`",
-			statusCode: http.StatusMethodNotAllowed,
-			method:     http.MethodHead,
-			url:        "/update/counter/test/1",
+			name:           "invalid method type (PUT)",
+			method:         "PUT",
+			url:            "/update/counter/b/3",
+			expectedStatus: http.StatusMethodNotAllowed,
 		},
 		{
-			name:       "PUT request returns `http.StatusMethodNotAllowed`",
-			statusCode: http.StatusMethodNotAllowed,
-			method:     http.MethodPut,
-			url:        "/update/counter/test/1",
+			name:           "invalid method type (DELETE)",
+			method:         "DELETE",
+			url:            "/update/gauge/a/2.0",
+			expectedStatus: http.StatusMethodNotAllowed,
 		},
 		{
-			name:       "DELETE request returns `http.StatusMethodNotAllowed`",
-			statusCode: http.StatusMethodNotAllowed,
-			method:     http.MethodDelete,
-			url:        "/update/counter/test/1",
+			name:           "valid reqeust for metric type 'counter'",
+			method:         "POST",
+			url:            "/update/counter/b/3",
+			expectedStatus: http.StatusOK,
 		},
 		{
-			name:       "CONNECT request returns `http.StatusMethodNotAllowed`",
-			statusCode: http.StatusMethodNotAllowed,
-			method:     http.MethodConnect,
-			url:        "/update/counter/test/1",
+			name:           "valid reqeust for metric type 'gauge'",
+			method:         "POST",
+			url:            "/update/gauge/a/2.0",
+			expectedStatus: http.StatusOK,
 		},
 		{
-			name:       "OPTIONS request returns `http.StatusMethodNotAllowed`",
-			statusCode: http.StatusMethodNotAllowed,
-			method:     http.MethodOptions,
-			url:        "/update/counter/test/1",
+			name:           "request without metric name",
+			method:         "POST",
+			url:            "/update/counter/3",
+			expectedStatus: http.StatusNotFound,
 		},
 		{
-			name:       "TRACE request returns `http.StatusMethodNotAllowed`",
-			statusCode: http.StatusMethodNotAllowed,
-			method:     http.MethodTrace,
-			url:        "/update/counter/test/1",
+			name:           "request with invalid metric type",
+			method:         "POST",
+			url:            "/update/amogus/gauge/2.0",
+			expectedStatus: http.StatusBadRequest,
 		},
 		{
-			name:       "PATCH request returns `http.StatusMethodNotAllowed`",
-			statusCode: http.StatusMethodNotAllowed,
-			method:     http.MethodPatch,
-			url:        "/update/counter/test/1",
+			name:           "request with invalid metric value (counter)",
+			method:         "POST",
+			url:            "/update/counter/b/3.14",
+			expectedStatus: http.StatusBadRequest,
 		},
 		{
-			name:       "correct request returns `http.StatusOK`",
-			statusCode: http.StatusOK,
-			method:     http.MethodPost,
-			url:        "/update/counter/test/1",
-		},
-		{
-			name:       "correct request returns `http.StatusOK`",
-			statusCode: http.StatusOK,
-			method:     http.MethodPost,
-			url:        "/update/gauge/test/3.14",
-		},
-		{
-			name: "request without metric name returns `http.StatusNotFound`",
-			statusCode: http.StatusNotFound,
-			method: http.MethodPost,
-			url: "/update/counter/1",
-		},
-		{
-			name: "request with invalid metric type returns `http.StatusBadRequest`",
-			statusCode: http.StatusBadRequest,
-			method: http.MethodPost,
-			url: "/update/amogus/test/1",
-		},
-		{
-			name: "request with invalid metric value (counter) return `http.StatusBadRequest`",
-			statusCode: http.StatusBadRequest,
-			method: http.MethodPost,
-			url: "/update/counter/test/3.14",
-		},
-		{
-			name: "request with invalid metric value (gauge) return `http.StatusBadRequest`",
-			statusCode: http.StatusBadRequest,
-			method: http.MethodPost,
-			url: "/update/gauge/test/pi",
+			name:           "request with invalid metric value (gauge)",
+			method:         "POST",
+			url:            "/update/gauge/a/pi",
+			expectedStatus: http.StatusBadRequest,
 		},
 	}
 
 	for _, test := range tests {
-		gauge := make(map[string]float64)
-		counter := make(map[string]int64)
-		storage := storage.NewMemStorage(gauge, counter)
+		t.Run(test.name, func(t *testing.T) {
+			req := resty.New().R()
+			req.Method = test.method
+			req.URL = srv.URL + test.url
 
-		t.Run(test.name, func (t *testing.T) {
-			request := httptest.NewRequest(test.method, test.url, nil)
-			w := httptest.NewRecorder()
-			UpdateMetrics(&storage)(w, request)
+			res, err := req.Send()
+			assert.NoError(t, err, "error making HTTP request")
 
-			res := w.Result()
-
-			err := res.Body.Close()
-			if err != nil {
-				t.Error(err)
-			}
-
-			if res.StatusCode != test.statusCode {
-				t.Errorf("expected status code %v, but got %v", test.statusCode, res.StatusCode)
-			}
+			assert.Equal(t, test.expectedStatus, res.StatusCode(), "Wrong response status code")
 		})
 	}
 }

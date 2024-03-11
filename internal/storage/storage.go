@@ -9,6 +9,7 @@ type Storage interface {
 	Counter(key string) (int64, error)
 	UpdateGauge(key string, val float64)
 	UpdateCounter(key string, val int64)
+	String() string
 }
 
 type KeyNotFoundError struct {
