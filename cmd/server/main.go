@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	"go-yandex-monitoring/internal/handler"
 	"go-yandex-monitoring/internal/storage"
@@ -11,7 +12,7 @@ import (
 )
 
 func main() {
-	parseFlags()
+	cfg := ParseConfig()
 
 	ms := storage.NewMemStorage(make(storage.MemStorageGauge), make(storage.MemStorageCounter))
 
@@ -21,9 +22,10 @@ func main() {
 	handler.GetMetricRouter(r, &ms)
 	handler.UpdateMetricsRouter(r, &ms)
 
-	fmt.Printf("[DEBUG] Server address: %s\n", flagAddress)
-	err := http.ListenAndServe(flagAddress, r)
+	fmt.Printf("[DEBUG] Server address: %s\n", cfg.Address)
+	err := http.ListenAndServe(cfg.Address, r)
 	if err != nil {
-		panic(err)
+		fmt.Println("[ERROR]", err)
+		os.Exit(1)
 	}
 }

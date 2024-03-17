@@ -8,18 +8,18 @@ import (
 )
 
 func main() {
-	parseFlags()
-	fmt.Printf("[DEBUG] Server address: %s\n", flagServerAddress)
-	fmt.Printf("[DEBUG] Report interval: %s\n", flagReportInterval)
-	fmt.Printf("[DEBUG] Poll interval: %s\n", flagPollInterval)
+	cfg := ParseConfig()
+	fmt.Printf("[DEBUG] Server address: %s\n", cfg.ServerAddress)
+	fmt.Printf("[DEBUG] Report interval: %s\n", cfg.ReportInterval)
+	fmt.Printf("[DEBUG] Poll interval: %s\n", cfg.PollInterval)
 
 	metrics := metrics.NewMetrics()
 
 	for {
-		for i := flagPollInterval; i < flagReportInterval; i += flagPollInterval {
+		for i := cfg.PollInterval; i < cfg.ReportInterval; i += cfg.PollInterval {
 			metrics.Poll()
-			time.Sleep(flagPollInterval)
+			time.Sleep(cfg.PollInterval)
 		}
-		metrics.Report(flagServerAddress)
+		metrics.Report(cfg.ServerAddress)
 	}
 }
