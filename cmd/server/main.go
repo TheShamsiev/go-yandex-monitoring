@@ -13,14 +13,13 @@ import (
 
 func main() {
 	cfg := ParseConfig()
-
 	ms := storage.NewMemStorage(make(storage.MemStorageGauge), make(storage.MemStorageCounter))
-
+	h := handler.Handler{Storage: &ms}
 	r := chi.NewRouter()
 
-	handler.GetMetricsRouter(r, &ms)
-	handler.GetMetricRouter(r, &ms)
-	handler.UpdateMetricsRouter(r, &ms)
+	h.GetMetric(r)
+	h.GetMetrics(r)
+	h.UpdateMetrics(r)
 
 	fmt.Printf("[DEBUG] Server address: %s\n", cfg.Address)
 	err := http.ListenAndServe(cfg.Address, r)

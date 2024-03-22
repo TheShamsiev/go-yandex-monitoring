@@ -14,7 +14,8 @@ import (
 func TestUpdateMetricsRouter(t *testing.T) {
 	ms := storage.NewMemStorage(storage.MemStorageGauge{"a": 1.0}, storage.MemStorageCounter{"b": 2})
 	r := chi.NewRouter()
-	UpdateMetricsRouter(r, &ms)
+	h := Handler{&ms}
+	h.UpdateMetrics(r)
 	srv := httptest.NewServer(r)
 	defer srv.Close()
 

@@ -14,7 +14,8 @@ import (
 func TestGetMetricRouter(t *testing.T) {
 	ms := storage.NewMemStorage(storage.MemStorageGauge{"a": 1.0}, storage.MemStorageCounter{"b": 2})
 	r := chi.NewRouter()
-	GetMetricRouter(r, &ms)
+	h := Handler{&ms}
+	h.GetMetric(r)
 	srv := httptest.NewServer(r)
 	defer srv.Close()
 

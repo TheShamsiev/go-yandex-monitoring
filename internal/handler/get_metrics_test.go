@@ -74,7 +74,8 @@ func TestGetMetricsRouter(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			r := chi.NewRouter()
-			GetMetricsRouter(r, &test.ms)
+			h := Handler{&test.ms}
+			h.GetMetrics(r)
 			srv := httptest.NewServer(r)
 			defer srv.Close()
 
